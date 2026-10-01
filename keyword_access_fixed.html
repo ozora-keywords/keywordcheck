@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>KEYWORD // ACCESS SYSTEM</title>
+<style>
+  :root{
+    --bg:#05070b;
+    --panel:rgba(13,18,29,.82);
+    --line:rgba(90,180,255,.22);
+    --text:#eef7ff;
+    --muted:#7890a8;
+    --cyan:#38d9ff;
+    --blue:#5b7cff;
+    --green:#5dffb0;
+    --red:#ff5577;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;min-height:100%;font-family:Inter,system-ui,-apple-system,"Segoe UI",sans-serif;background:var(--bg);color:var(--text)}
+  body{overflow-x:hidden}
+  body:before{
+    content:"";position:fixed;inset:0;pointer-events:none;opacity:.28;
+    background:
+      linear-gradient(rgba(56,217,255,.035) 1px,transparent 1px),
+      linear-gradient(90deg,rgba(56,217,255,.035) 1px,transparent 1px);
+    background-size:34px 34px;
+    mask-image:linear-gradient(to bottom,#000,transparent 90%);
+  }
+  .orb{position:fixed;width:420px;height:420px;border-radius:50%;filter:blur(90px);opacity:.14;pointer-events:none}
+  .orb.a{background:#00cfff;top:-170px;left:-100px}
+  .orb.b{background:#675cff;right:-150px;bottom:-180px}
+  .wrap{width:min(900px,92%);margin:0 auto;padding:42px 0 70px}
+  .topbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:24px;color:var(--muted);font-size:12px;letter-spacing:.16em}
+  .status{display:flex;align-items:center;gap:8px}
+  .dot{width:8px;height:8px;border-radius:50%;background:var(--green);box-shadow:0 0 15px var(--green);animation:pulse 1.5s infinite}
+  @keyframes pulse{50%{opacity:.35;transform:scale(.7)}}
+  .hero{text-align:center;padding:24px 0 30px}
+  .eyebrow{font-size:11px;letter-spacing:.32em;color:var(--cyan);margin-bottom:14px}
+  h1{font-size:clamp(32px,7vw,66px);line-height:.95;margin:0;font-weight:800;letter-spacing:-.045em}
+  h1 span{color:var(--cyan);text-shadow:0 0 28px rgba(56,217,255,.35)}
+  .sub{color:var(--muted);margin:16px auto 0;max-width:620px;line-height:1.7}
+  .panel{
+    position:relative;background:var(--panel);border:1px solid var(--line);
+    border-radius:24px;padding:26px;backdrop-filter:blur(16px);
+    box-shadow:0 25px 80px rgba(0,0,0,.35), inset 0 0 50px rgba(56,217,255,.025);
+  }
+  .panel:before,.panel:after{content:"";position:absolute;width:34px;height:34px;border-color:var(--cyan);opacity:.7}
+  .panel:before{left:-1px;top:-1px;border-left:2px solid;border-top:2px solid;border-radius:24px 0 0 0}
+  .panel:after{right:-1px;bottom:-1px;border-right:2px solid;border-bottom:2px solid;border-radius:0 0 24px 0}
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+  label{display:block;color:var(--muted);font-size:11px;letter-spacing:.14em;margin:0 0 8px 4px}
+  input,select{
+    width:100%;border:1px solid rgba(130,180,220,.18);background:#080d16;color:var(--text);
+    border-radius:14px;padding:15px 14px;font-size:16px;outline:none;transition:.2s;
+  }
+  input:focus,select:focus{border-color:var(--cyan);box-shadow:0 0 0 3px rgba(56,217,255,.08)}
+  button{
+    width:100%;margin-top:18px;border:0;border-radius:14px;padding:16px 18px;
+    color:#001018;background:linear-gradient(100deg,var(--cyan),#8ff4ff);
+    font-size:15px;font-weight:800;letter-spacing:.12em;cursor:pointer;
+    box-shadow:0 0 30px rgba(56,217,255,.15);transition:.2s;
+  }
+  button:hover{transform:translateY(-2px);box-shadow:0 0 38px rgba(56,217,255,.28)}
+  button:active{transform:translateY(0)}
+  button:disabled{opacity:.55;cursor:wait;transform:none}
+  .quick{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap}
+  .quick button{width:auto;margin:0;padding:9px 12px;font-size:11px;background:#0d1624;color:#a9dfff;border:1px solid rgba(56,217,255,.16);box-shadow:none}
+  .result{
+    margin-top:18px;min-height:190px;border:1px solid rgba(130,180,220,.13);
+    border-radius:20px;background:rgba(3,7,13,.62);display:grid;place-items:center;
+    padding:28px;text-align:center;overflow:hidden;position:relative;
+  }
+  .idle{color:#4e657d;font-size:13px;letter-spacing:.08em}
+  .loading{width:100%}
+  .scanner{height:2px;background:linear-gradient(90deg,transparent,var(--cyan),transparent);box-shadow:0 0 18px var(--cyan);animation:scan 1.2s infinite}
+  @keyframes scan{0%{transform:translateY(-60px);opacity:0}20%{opacity:1}100%{transform:translateY(60px);opacity:0}}
+  .loadingText{font-size:12px;color:var(--cyan);letter-spacing:.2em;margin-top:14px;animation:flicker .8s infinite}
+  @keyframes flicker{50%{opacity:.35}}
+  .found{animation:appear .55s cubic-bezier(.2,.8,.2,1)}
+  @keyframes appear{from{opacity:0;transform:scale(.94);filter:blur(8px)}to{opacity:1;transform:none;filter:none}}
+  .found .tag{color:var(--green);font-size:11px;letter-spacing:.2em}
+  .date{font-size:14px;color:#9eb2c8;margin:10px 0 4px}
+  .keyword{
+    font-size:clamp(52px,13vw,94px);font-weight:900;letter-spacing:.06em;
+    color:#fff;text-shadow:0 0 18px rgba(56,217,255,.35),0 0 55px rgba(56,217,255,.16);
+  }
+  .copy{margin-top:14px;border:1px solid rgba(56,217,255,.2);background:#0a1320;color:#9edfff;border-radius:10px;padding:9px 13px;font-size:12px;cursor:pointer}
+  .error .tag{color:var(--red)}
+  .error p{color:#9caabc;line-height:1.7}
+  .footer{text-align:center;color:#3f5368;font-size:10px;letter-spacing:.15em;margin-top:22px}
+  @media(max-width:620px){.grid{grid-template-columns:1fr}.wrap{padding-top:25px}.panel{padding:18px}}
+</style>
+</head>
+<body>
+<div class="orb a"></div><div class="orb b"></div>
+<main class="wrap">
+  <div class="topbar">
+    <div>KEYWORD / ACCESS</div>
+    <div class="status"><span class="dot"></span> ONLINE</div>
+  </div>
+
+  <section class="hero">
+    <div class="eyebrow">SECURE KEYWORD RETRIEVAL SYSTEM</div>
+    <h1>KEYWORD <span>ACCESS</span></h1>
+    <p class="sub">日付と時限を指定すると、登録されている授業キーワードを瞬時に照合します。</p>
+  </section>
+
+  <section class="panel">
+    <div class="grid">
+      <div>
+        <label for="date">DATE / 日付</label>
+        <input id="date" type="date">
+      </div>
+      <div>
+        <label for="period">PERIOD / 時限</label>
+        <select id="period">
+          <option value="1">1限目</option>
+          <option value="2">2限目</option>
+          <option value="3">3限目</option>
+        </select>
+      </div>
+    </div>
+
+    <button id="searchBtn" type="button">SEARCH KEYWORD　→</button>
+
+    <div class="quick">
+      <button type="button" data-period="1">1限</button>
+      <button type="button" data-period="2">2限</button>
+      <button type="button" data-period="3">3限</button>
+      <button type="button" id="todayBtn">今日</button>
+    </div>
+
+    <div class="result" id="result">
+      <div class="idle">SELECT DATE & PERIOD / 検索条件を指定してください</div>
+    </div>
+  </section>
+
+  <div class="footer">DATA SOURCE : GOOGLE APPS SCRIPT　/　KEYWORD ACCESS SYSTEM</div>
+</main>
+
+<script>
+const GAS_URL = "https://script.google.com/macros/s/AKfycbxKQU0nkigff43QcWPp9tEEtIFxH57Bn89c3qYH6Q2BZd-_z3L2DszNaPY2Ka6XlweZ/exec";
+
+const dateInput = document.getElementById("date");
+const periodInput = document.getElementById("period");
+const result = document.getElementById("result");
+const searchBtn = document.getElementById("searchBtn");
+
+searchBtn.addEventListener("click", searchKeyword);
+document.querySelectorAll("[data-period]").forEach(btn => {
+  btn.addEventListener("click", () => setPeriod(btn.dataset.period));
+});
+document.getElementById("todayBtn").addEventListener("click", today);
+
+function pad(n){ return String(n).padStart(2,"0"); }
+
+function today(){
+  const d = new Date();
+  dateInput.value = `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+}
+
+function setPeriod(p){
+  periodInput.value = String(p);
+  searchKeyword();
+}
+
+function normalizeDate(value){
+  if(value instanceof Date && !isNaN(value)) return value.toISOString().slice(0,10);
+  const s = String(value ?? "").trim();
+  if(/^\d{4}-\d{2}-\d{2}/.test(s)) return s.slice(0,10);
+  const m = s.match(/(\d{4})[\/\-.](\d{1,2})[\/\-.](\d{1,2})/);
+  return m ? `${m[1]}-${pad(m[2])}-${pad(m[3])}` : s;
+}
+
+function periodMatches(value, period){
+  const s = String(value ?? "").trim();
+  return s.includes(`${period}限`) || s.includes(`${period}限目`);
+}
+
+async function searchKeyword(){
+  const date = dateInput.value;
+  const period = periodInput.value;
+
+  if(!date){
+    result.innerHTML = '<div class="error"><div class="tag">INPUT REQUIRED</div><p>日付を選択してください。</p></div>';
+    return;
+  }
+
+  searchBtn.disabled = true;
+  result.innerHTML = `
+    <div class="loading">
+      <div class="scanner"></div>
+      <div class="loadingText">SEARCHING DATABASE...</div>
+    </div>`;
+
+  try{
+    const res = await fetch(GAS_URL, {cache:"no-store"});
+    if(!res.ok) throw new Error("HTTP " + res.status);
+
+    const data = await res.json();
+
+    if(!Array.isArray(data)) throw new Error("DATA FORMAT ERROR");
+
+    const row = data.find(r =>
+      normalizeDate(r["日付"]) === date &&
+      String(r["キーワードの種類"] ?? "") === "授業" &&
+      periodMatches(r["時間"], period)
+    );
+
+    await new Promise(resolve => setTimeout(resolve, 650));
+
+    if(row && String(row["授業キーワード"] ?? "").trim() !== ""){
+      const keyword = String(row["授業キーワード"]).trim();
+      const [y,m,d] = date.split("-");
+      result.innerHTML = `
+        <div class="found">
+          <div class="tag">✓ KEYWORD FOUND / ACCESS GRANTED</div>
+          <div class="date">${y}.${m}.${d}　•　${period}限目</div>
+          <div class="keyword">${escapeHtml(keyword)}</div>
+          <button class="copy" onclick="copyKeyword('${escapeJs(keyword)}')">COPY KEYWORD</button>
+        </div>`;
+    }else{
+      result.innerHTML = `
+        <div class="error found">
+          <div class="tag">× KEYWORD NOT FOUND</div>
+          <p>${date.replaceAll("-",".")} / ${period}限目<br>登録されたキーワードが見つかりませんでした。</p>
+        </div>`;
+    }
+  }catch(e){
+    console.error(e);
+    result.innerHTML = `
+      <div class="error found">
+        <div class="tag">× CONNECTION ERROR</div>
+        <p>データを取得できませんでした。<br>GASの公開設定、または通信状態を確認してください。</p>
+      </div>`;
+  }finally{
+    searchBtn.disabled = false;
+  }
+}
+
+function escapeHtml(s){
+  return s.replace(/[&<>"']/g, c => ({
+    "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"
+  }[c]));
+}
+
+function escapeJs(s){
+  return s.replace(/\\/g,"\\\\").replace(/'/g,"\\'");
+}
+
+async function copyKeyword(keyword){
+  try{
+    await navigator.clipboard.writeText(keyword);
+    const b = document.querySelector(".copy");
+    if(b){ b.textContent = "COPIED ✓"; setTimeout(()=>b.textContent="COPY KEYWORD",1400); }
+  }catch(e){}
+}
+
+today();
+</script>
+</body>
+</html>
